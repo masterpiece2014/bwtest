@@ -1,0 +1,80 @@
+///////////////////////////////////////////////////////////////////////////////
+thread created by ternimal: sort 1<<26 shorts, 6 threads created.
+///////////////////////////////////////////////////////////////////////////////
+#include <algorithm>
+#include <vector>
+
+using namespace std;
+void intensiveCalculation() {
+    int SIZE = 1<<26;
+    std::vector<short> bigv(SIZE);
+    for(auto& i : bigv) {
+        i = rand();
+    }
+    std::sort(bigv.begin(), bigv.end());
+}
+
+int main() {
+	intensiveCalculation();
+}
+///////////////////////////////////////////////////////////////////////////////
+thread created by ternimal: sort 1<<25 shorts, one thread created.
+///////////////////////////////////////////////////////////////////////////////
+timer: ( first three in micro second, last one in nanosecond)
+///////////////////////////////////////////////////////////////////////////////
+    timespec start;
+    timespec end;
+    clock_gettime(CLOCK_THREAD_CPUTIME_ID, &start);
+    auto t_start = std::chrono::high_resolution_clock::now();
+    realMark.start();
+    threadMark.start();
+
+    put_out << "\nrealMark:   :" << realMark.getDuration();
+    put_out << "\nthreadMark  :" << threadMark.getDuration();
+    put_out << "\nchrono ms   :" << std::chrono::duration_cast<std::chrono::microseconds>(t_end - t_start).count();
+    put_out<<  "\nlibrt nano  :" << timespecDiff(end, start);
+
+    put_out << "start 1\n";
+    intensiveCalculation();
+//    put_out << "start 2\n";
+//    std::thread t1(intensiveCalculation);
+//    t1.join();
+    
+    realMark.stop();
+    threadMark.stop();
+    clock_gettime(CLOCK_THREAD_CPUTIME_ID, &end);
+    auto t_end = std::chrono::high_resolution_clock::now();
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+    single thread run continuously :
+///////////////////////////////////////////////////////////////////////////////
+start 1
+
+realMark:   :20371102
+threadMark  :20350582
+chrono ms   :20371105
+librt nano  :20350583587
+///////////////////////////////////////////////////////////////////////////////
+	thread competited with other 6 thread 
+///////////////////////////////////////////////////////////////////////////////
+start 1
+
+realMark:   :90860711
+threadMark  :30073174
+chrono ms   :90860714
+librt nano  :30073176608
+
+///////////////////////////////////////////////////////////////////////////////
+compare:
+threadMark  :20350582
+chrono ms   :20371105
+///
+threadMark  :30073174
+chrono ms   :90860714
+///////////////////////////////////////////////////////////////////////////////
+conclusion: threadMark is more precise
+
+see testbase.h line 96
+///////////////////////////////////////////////////////////////////////////////
