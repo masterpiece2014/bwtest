@@ -79,7 +79,7 @@ namespace BWTestInternal
 
         int TestRegister::runAllTests()  {
             TestRegister* obj = TestRegister::instance();
-            for (TYPENAME_OUT GroupMap::iterator i = obj->tests_.begin();
+            for (TYPENAME GroupMap::iterator i = obj->tests_.begin();
                                         i != obj->tests_.end();
                                         ++i) {
                 for (size_t j = 0; j != i->second.size(); ++j) {
@@ -90,9 +90,9 @@ namespace BWTestInternal
         }
 
         int TestRegister::runTest(const char* g, const char* name) {
-            TYPENAME_OUT GroupMap::iterator  grp = TestRegister::instance()->tests_.find(g);
+            TYPENAME GroupMap::iterator  grp = TestRegister::instance()->tests_.find(g);
             if (grp != TestRegister::instance()->tests_.end()) {
-                for (TYPENAME_OUT Group::iterator i = grp->second.begin();
+                for (TYPENAME Group::iterator i = grp->second.begin();
                                     i != grp->second.end();
                                                         ++i) {
                     if (0 == strcmp(name, (*i)->getTestCaseName())) {

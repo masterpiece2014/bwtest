@@ -21,8 +21,9 @@ struct Time {
 typedef struct Time Time;
 
 
-#ifdef BWTEST_OS_LINUX
-#include <ctime>
+#ifdef BWTEST_SYS_POSIX
+#include <time.h>
+#include <unistd.h>
 
 Time getRealTime() {
     timespec start;
@@ -46,17 +47,14 @@ Time getThreadTime() {
     return mytime;
 }
 
+int getProcessorNumber() {    
+    return sysconf(_SC_NPROCESSORS_ONLN);
+}
 #endif
 
-#ifdef BWTEST_OS_WIN32
+#ifdef BWTEST_SYS_WIN
+
 #include <windows.h>
-
-
-//http://www.drdobbs.com/windows/win32-performance-measurement-options/184416651
-
-//http://msdn.microsoft.com/en-us/library/ms683237%28VS.85%29.aspx
-//http://msdn.microsoft.com/en-us/library/ms683223%28VS.85%29.aspx
-
 
 LARGE_INTEGER getFILETIMEoffset() {
     SYSTEMTIME s;
@@ -77,7 +75,7 @@ LARGE_INTEGER getFILETIMEoffset() {
     return (t);
 }
 
-int win32_clock_gettime(int X, struct timeval *tv) {
+int win32_clock_gettime(struct timeval *tv) {
     LARGE_INTEGER           t;
     FILETIME                fileTime;
     double                  microseconds;
@@ -91,8 +89,7 @@ int win32_clock_gettime(int X, struct timeval *tv) {
         initialized = 1;
 //        QueryPerformanceFrequency
 //        作用：返回硬件支持的高精度计数器的频率。
-//        返回值：非零，硬件支持高精度计数器；零，硬件不支持，读取失败。
-
+//        返回值：非零，硬件支持高精度计数器；零，硬件不支持，读取失败
         usePerformanceCounter = QueryPerformanceFrequency(&performanceFrequency);
         if (usePerformanceCounter) {
             QueryPerformanceCounter(&offset);
@@ -102,7 +99,9 @@ int win32_clock_gettime(int X, struct timeval *tv) {
             frequencyToMicroseconds = 10.;
         }
     }
-    if (usePerformanceCounter) QueryPerformanceCounter(&t);
+    if (usePerformanceCounter) {
+        QueryPerformanceCounter(&t);
+    }
     else {
         GetSystemTimeAsFileTime(&fileTime);
         t.QuadPart = fileTime.dwHighDateTime;
@@ -120,15 +119,11 @@ int win32_clock_gettime(int X, struct timeval *tv) {
     return (0);
 }
 
-
-//tv_sec
-//tv_usec
-
 Time getRealTime() {
     timeval start;
     Time mytime;
     assert(0 == 
-        win32_clock_gettime(0, &start)
+        win32_clock_gettime(&start)
     );
     mytime.sec = start.tv_sec;
     mytime.mic_sec = start.tv_usec;
@@ -136,21 +131,76 @@ Time getRealTime() {
 }
 
 Time getThreadTime() {
-    timeval start;
     Time mytime;
-    assert(0 == 
-        win32_clock_gettime(3, &start)
-    );
-    mytime.sec = start.tv_sec;
-    mytime.mic_sec = start.tv_usec;
+    LARGE_INTEGER total;
+    FILETIME creation, exit, kernel, user;
+    GetThreadTimes( GetCurrentThread() , &creation, &exit, &kernel, &user);
+    total.HighPart = user.dwHighDateTime + kernel.dwHighDateTime;
+    total.LowPart = user.dwLowDateTime + kernel.dwLowDateTime;
+    mytime.sec = total.QuadPart / 1000000;
+    mytime.mic_sec = total.QuadPart % 1000000;
     return mytime;
+}
+
+
+int getProcessorNumber() {
+    SYSTEM_INFO siSysInfo;
+    GetSystemInfo(&siSysInfo);
+    return siSysInfo.dwNumberOfProcessors;
 }
 
 #endif
 
 
+
+#ifdef BWTEST_SYS_MAC
+
+#include <mach/clock.h>
+#include <mach/mach.h>
+#include <sys/time.h>
+#include <sys/param.h>
+#include/ <sys/sysctl.h>
+
+Time getRealTime() {
+    timeval time;
+    Time mytime;
+    gettimeofday(&time, NULL);
+    mytime.sec = time.tv_sec;
+    mytime.mic_sec = time.tv_usec;
+    return mytime;
 }
 
+Time getThreadTime() {
+    Time mytime;
+    clock_serv_t cclock;
+    mach_timespec_t mts;
+    host_get_clock_service(mach_host_self(), CALENDAR_CLOCK, &cclock);
+    clock_get_time(cclock, &mts);
+    mach_port_deallocate(mach_task_self(), cclock);
+    mytime.sec = mts.tv_sec;
+    mytime.mic_sec = mts.tv_nsec / 1000L;
+    return mytime;
+}
 
+int getProcessorNumber() {        
+    int nm[2];
+    size_t len = 4;
+    uint32_t count;
+
+    nm[0] = CTL_HW;
+    nm[1] = HW_AVAILCPU; // HW_NCPU
+    sysctl(nm, 2, &count, &len, NULL, 0);
+    if(count < 1) {
+        nm[1] = HW_NCPU;
+        sysctl(nm, 2, &count, &len, NULL, 0);
+        if(count < 1) {
+            count = 1; 
+        }
+    }
+    return count;
+}
+#endif
+
+}
 
 

@@ -17,13 +17,11 @@
         #error "please up data your complier to GCC 4.0.0 and above"
     #endif
 
-    #define TYPENAME_OUT    typename
-
+    #define TYPENAME    typename
 
     #pragma GCC diagnostic ignored "-Wreturn-type"
     #pragma GCC diagnostic ignored "-Wcomment"
     #pragma GCC diagnostic ignored "-Wunused-variable"
-
 
 #else
 #ifdef _MSC_VER
@@ -34,34 +32,31 @@
         #error "please up data your complier to VC 7.0 and above"
     #endif
 
-    #define TYPENAME_OUT
+    #define TYPENAME
 
 
     #pragma warning(disable: 4003) //   not enough actual parameters for macro
     #pragma warning(disable: 4996) // 'vsnprintf': This function or variable may be unsafe. Consider using vsnprintf_s instead
     #pragma warning(disable: 4715) // 'bwtest::getOutputStream' : not all control paths return a value
-
 //    #pragma warning(disable: 4625) // nullostream : copy constructor could not be generated because a base class copy constructor is inaccessible
 //4626: 'bwtest::BWTestInternal::NullOStream' : assignment operator
 
-
 #endif
 #endif
 
 
-#ifdef  __linux__
-    #define BWTEST_OS_LINUX 1
+#if (defined(__unix__) || defined(__unix) || defined(unix) || defined(__linux__))
+    #define BWTEST_SYS_POSIX 1
+#elif defined(_WIN32)
+    #define BWTEST_SYS_WIN 1
+#elif (defined(__APPLE__) && defined(__MACH__))
+    #define BWTEST_SYS_MAC 1
 #else
-    #ifdef _WIN32
-        #define BWTEST_OS_WIN32 1
-    #endif
+    #error "unknown OS."
 #endif
 //////////////////////////////////////////////////////////////////////////////////////////////
                   //  #undef BWTEST_HAS_CXX11_
 //////////////////////////////////////////////////////////////////////////////////////////////
-
-
-
 
 
 #undef BWTEST_NO_ASSIGN

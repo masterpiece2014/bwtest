@@ -18,6 +18,6 @@ int main() {
     RUN_TEST(custom, MyCustomTestClass);
     RUN_TEST(sample1, exceptions);
     //RUN_GROUP(sample2);
-    TYPENAME_OUT std::vector<int>::iterator iter;
+    TYPENAME std::vector<int>::iterator iter;
     return 0;
 }
