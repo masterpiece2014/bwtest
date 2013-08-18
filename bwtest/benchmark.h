@@ -24,16 +24,14 @@ public:
     
 
 private:
-    
+    CountingType type_;
     Time start_;
     Time end_;
-    CountingType type_;
 
 public:
     
     Benchmark(CountingType t)
         :   type_(t)    {
-        
         this->refresh();
     }
 
@@ -45,7 +43,7 @@ public:
         }
     }
     
-    void stop() {        
+    void stop() {
         if (CountRealTime == this->type_) {
            this->end_ = getRealTime();
         } else {
@@ -53,30 +51,30 @@ public:
         }
 
     }
-    Time getCurrentTime() {
+    Time getCurrentTime() const {
         return CountRealTime == this->type_ ? 
               getRealTime() :  getThreadTime();
     }
 
-    long getDuration() {
+    long getDuration() const BW_NOEXCEPT {
         return timeDiff(this->end_, this->start_);
     }
     
-    void refresh() {
+    void refresh() BW_NOEXCEPT {
         this->start_.sec = 0;
         this->start_.mic_sec = 0;
         this->end_.sec = 0 ;
         this->end_.mic_sec = 0;
     }
     
-    bool isFresh() {
+    bool isFresh() const BW_NOEXCEPT {
         return 0 == start_.sec 
                 && 0 == start_.mic_sec 
                 && 0 == end_.sec 
                 && 0 == end_.mic_sec;
     }
 
-    long static timeDiff(Time end, Time start) {
+    long static timeDiff(Time end, Time start) BW_NOEXCEPT {
       if (end.sec == start.sec) {
         assert(end.mic_sec >= start.mic_sec);
         return end.mic_sec - start.mic_sec;

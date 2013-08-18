@@ -11,9 +11,6 @@
 // you file
 #include "sample1.h"
 
-// include bwtest
-#include "bwtest\bwtest.h"
-
 //  test gruop      test case name      excution number
 //      |               |                   |
 TEST(sample1,       odd_even,               1) { 

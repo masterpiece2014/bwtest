@@ -9,10 +9,11 @@
 
 
 #include "commen.h"
+#include "nullostream.h"
 
 #include <iostream>
 #include <fstream>
-
+#include <iomanip>
 namespace bwtest
 {
 
@@ -26,10 +27,9 @@ namespace bwtest
     static BWTestOutputType outputStream = stdCerr;
     static char* g_fileName  = BW_NULL_PTR;
 
-
-    void setOutput(const char* c_str);
-
+    void setOutputStream(const char*);
     std::ostream& getOutputStream();
+    std::ostream& getNullOutputStream();
 
     void cleanOutputStream();
 

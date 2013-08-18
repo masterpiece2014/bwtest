@@ -64,17 +64,63 @@ namespace BWTestInternal
             return true;
         }
 
+        int TestRegister::runTest(const char* g, const char* name) {
+            TYPENAME GroupMap::iterator  grp = TestRegister::instance()->tests_.find(g);
+            if (grp != TestRegister::instance()->tests_.end()) {
+                for (TYPENAME Group::iterator i = grp->second.begin();
+                                    i != grp->second.end();
+                                    ++i) {
+                    const char* testcase = (*i)->getTestCaseName();
+                    if (0 == strcmp(name, testcase)) {
+                        bwtest::getOutputStream() << "\n<RunTestCase "
+                        << std::setw(10) << " group=\"" << (*i)->getTestGroupName() << '\"' 
+                        << std::setw(10) << " case=\"" << (*i)->getTestCaseName() << '\"'
+                        << ">\n";
+
+                        (*i)->excute();
+                
+                        bwtest::getOutputStream() << "\n</RunTestCase>\n";
+                        
+                        return 0;
+                    }
+                }
+            }
+            bwtest::getOutputStream() << "\n<RunTestCase "
+            << std::setw(10) << " group=\"" << g << '\"' 
+            << std::setw(10) << " case=\"" << name << '\"'
+            << '>'
+            << "\nNo such test case"
+            << "\n</RunTestCase>";        
+        }
+
         int  TestRegister::runGroup(const char* group) {
             GroupMap::iterator  grp = TestRegister::instance()->tests_.find(group);
             if (grp != TestRegister::instance()->tests_.end()) {
+                bwtest::getOutputStream() 
+                    << "\n<RunTestGroup"
+                    << std::setw(10) << " group=\"" << group << '\"' 
+                    << '>';
+
                 for (size_t j = 0; j != grp->second.size(); ++j) {
+
+                    bwtest::getOutputStream() << "\n    <RunTestCase "
+                    << std::setw(10) << " case=\"" << grp->second.at(j)->getTestCaseName() << '\"'
+                    << ">\n";
+
                     grp->second.at(j)->excute();
+                
+                    bwtest::getOutputStream() << "    </RunTestCase>";
                 }
+
+               bwtest::getOutputStream()
+                    << "\n</RunTestGroup>\n";
                 return 0;
-            } else {
-                put_out << ">>>  empty group: " << group << '\n';
-                return 1;
             }
+            bwtest::getOutputStream() << "\n<RunTestGroup "
+            << std::setw(10) << " group=\"" << group << '\"'
+            << '>'
+            << "\nNo such test group"
+            << "\n</RunTestGroup>\n";
         }
 
         int TestRegister::runAllTests()  {
@@ -82,31 +128,24 @@ namespace BWTestInternal
             for (TYPENAME GroupMap::iterator i = obj->tests_.begin();
                                         i != obj->tests_.end();
                                         ++i) {
+                bwtest::getOutputStream() 
+                    << "\n<RunTestGroup"
+                    << std::setw(10) << " group=\"" << i->first << '\"' 
+                    << '>';
                 for (size_t j = 0; j != i->second.size(); ++j) {
+                    bwtest::getOutputStream() << "\n    <RunTestCase "
+                    << std::setw(10) << " case=\"" << i->second.at(j)->getTestCaseName() << '\"'
+                    << ">\n";
+
                     i->second.at(j)->excute();
+
+                    bwtest::getOutputStream() << "    </RunTestCase>";
                 }
+                bwtest::getOutputStream()
+                    << "\n</RunTestGroup>\n";
             }
             return 0;
         }
-
-        int TestRegister::runTest(const char* g, const char* name) {
-            TYPENAME GroupMap::iterator  grp = TestRegister::instance()->tests_.find(g);
-            if (grp != TestRegister::instance()->tests_.end()) {
-                for (TYPENAME Group::iterator i = grp->second.begin();
-                                    i != grp->second.end();
-                                                        ++i) {
-                    if (0 == strcmp(name, (*i)->getTestCaseName())) {
-                        (*i)->excute();
-                        break;
-                    }
-                }
-                return 0;
-            } else {
-                put_out << ">>>  empty group: " << g << '\n';
-                return 1;
-            }
-        }
-
 //        void TestRegister::reportAllTests() BW_NOEXCEPT {
 //                        ::bwtest::getOutputStream() << "\n\n=============================================\n";
 //            ::bwtest::getOutputStream() << ">>>\t TEST REPORT" << std::endl;
@@ -125,6 +164,36 @@ namespace BWTestInternal
 //        }
 
 
+        int TestRegister::reportTest(const char*group, const char*name) BW_NOEXCEPT {
+            return 0;
+        }
+        int TestRegister::reportGroup(const char* group) BW_NOEXCEPT {
+            return 0;
+        }
+        int TestRegister::reportAllTests() BW_NOEXCEPT {
+                    TestRegister* obj = TestRegister::instance();
+            for (TYPENAME GroupMap::iterator i = obj->tests_.begin();
+                                        i != obj->tests_.end();
+                                        ++i) {
+                bwtest::getOutputStream() 
+                    << "\n<TestGroup"
+                    << std::setw(10) << " group=\"" << i->first << '\"' 
+                    << '>';
+                for (size_t j = 0; j != i->second.size(); ++j) {
+                    i->second.at(j)->printReport();
+                }
+                bwtest::getOutputStream()
+                    << "\n</TestGroup>\n";
+            }
+            return 0;
+        }
+        
+  //          <testsuites tests="3" failures="0" disabled="0" errors="0" time="0.001" name="AllTests">  
+  //<testsuite name="CHashTableTest" tests="3" failures="0" disabled="0" errors="0" time="0.001">  
+  //  <testcase name="hashfunc" status="run" time="0.001" classname="CHashTableTest" />  
+  //  <testcase name="addget" status="run" time="0" classname="CHashTableTest" />  
+  //  <testcase name="delget" status="run" time="0" classname="CHashTableTest" />  
+  //</testsuite>  
 /////////////////////////////////////////////////////////////////////////////////
         TestRegister::~TestRegister() BW_NOEXCEPT {
             for (GroupMap::iterator i = tests_.begin(); i != tests_.end(); ++i) {

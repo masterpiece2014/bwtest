@@ -24,7 +24,7 @@
 #include "commen.h"
 #include "testio.h"
 #include "testbase.h"
-#include "nullostream.h"
+#include "benchmark.h"
 
 
 
@@ -154,37 +154,6 @@ namespace BWTestInternal {
     assert(fabs(x - y) < z);
 
 
-#undef LOOP_FUNC
-#define LOOP_FUNC(func, loops)\
-            {\
-                size_t std_except_caught = 0;\
-                size_t unknown_except_caught = 0;\
-                for(size_t i = 0; i != loops; ++i ) {\
-                    try{\
-                    func();\
-                    }catch(std::exception& e) {\
-                        std_except_caught++;\
-                        OUT_ONCE(BWTestInternal::makeErrorMsg(__FILE__, __FUNCTION__, (long long)__LINE__));\
-                        OUT_ONCE("\n>>>  caught std exception\n");\
-                        OUT_ONCE(e.what());\
-                        OUT_ONCE("\n");\
-                    }\
-                    catch(...) {\
-                        unknown_except_caught++;\
-                        OUT_ONCE(BWTestInternal::makeErrorMsg(__FILE__, __FUNCTION__, (long long)__LINE__));\
-                        OUT_ONCE("\n>>>  caught unknown exception");\
-                        OUT_ONCE("\n");\
-                    }\
-                }\
-                OUT_ONCE("\n>>  Totally caught: ");\
-                OUT_ONCE(std_except_caught + unknown_except_caught);\
-                OUT_ONCE("\n>>>    std exception : ");\
-                OUT_ONCE(std_except_caught);\
-                OUT_ONCE("\n>>>    unknown exception: ");\
-                OUT_ONCE(unknown_except_caught);\
-                OUT_ONCE("\n");\
-            }
-
 namespace bwtest {
 
 namespace BWTestInternal
@@ -203,7 +172,7 @@ class TestRegister
         typedef std::map<std::string, Group>    GroupMap;
         GroupMap tests_;
         
-        unsigned long int time_total_;// duration, in second.
+        unsigned long int time_total_;// duration, in micro second.
 
         static TestRegister* class_handler;
 
@@ -212,16 +181,15 @@ class TestRegister
         ~TestRegister() BW_NOEXCEPT;
 
         bool registerTestDefaultGroup(::bwtest::TestBase* newTest);
-
         bool registerTest(::bwtest::TestBase* newTest, const char* group);
         
+        int runTest(const char*group, const char*name);
+        int runGroup(const char* group);
         int runAllTests();
 
-        int runGroup(const char* group);
-        
-        int runTest(const char*group, const char*name);
-        
- //       int reportAllTests() BW_NOEXCEPT;
+        int reportTest(const char*group, const char*name) BW_NOEXCEPT;
+        int reportGroup(const char* group) BW_NOEXCEPT;
+        int reportAllTests() BW_NOEXCEPT;
         
         static TestRegister* instance();
 };
@@ -243,7 +211,9 @@ class TestRegister
 #define RUN_TEST(group, name)\
         bwtest::BWTestInternal::TestRegister::instance()->runTest(#group, #name)
 /////////////////////////////////////////////////////////
-
+#undef REPORT_ALL
+#define REPORT_ALL\
+        bwtest::BWTestInternal::TestRegister::instance()->reportAllTests
 ////////////////////////////////////////////////////////////
 
 namespace bwtest {
@@ -259,8 +229,7 @@ std::ostream& operator<< (const bwtest::BWTestInternal::PrintAux& expAux, const 
         return bwtest::getOutputStream();
     }
     else {
-        static bwtest::BWTestInternal::NullOStream nullOS;// smaller than stringstream
-        return nullOS;
+        return bwtest::getNullOutputStream();
     }
 }
 
@@ -360,6 +329,39 @@ std::ostream& operator<< (const bwtest::BWTestInternal::PrintAux& expAux, const 
                                     __FUNCTION__)
 
 
+
+//@deprecated
+#undef LOOP_FUNC
+#define LOOP_FUNC(func, loops)\
+            {\
+                size_t std_except_caught = 0;\
+                size_t unknown_except_caught = 0;\
+                for(size_t i = 0; i != loops; ++i ) {\
+                    try{\
+                        func();\
+                    }catch(std::exception& e) {\
+                        std_except_caught++;\
+                        OUT_ONCE(BWTestInternal::makeErrorMsg(__FILE__, __FUNCTION__, (long long)__LINE__));\
+                        OUT_ONCE("\n>>>  caught std exception\n");\
+                        OUT_ONCE(e.what());\
+                        OUT_ONCE("\n");\
+                    }\
+                    catch(...) {\
+                        unknown_except_caught++;\
+                        OUT_ONCE(BWTestInternal::makeErrorMsg(__FILE__, __FUNCTION__, (long long)__LINE__));\
+                        OUT_ONCE("\n>>>  caught unknown exception");\
+                        OUT_ONCE("\n");\
+                    }\
+                }\
+                OUT_ONCE("\n>>  Totally caught: ");\
+                OUT_ONCE(std_except_caught + unknown_except_caught);\
+                OUT_ONCE("\n>>>    std exception : ");\
+                OUT_ONCE(std_except_caught);\
+                OUT_ONCE("\n>>>    unknown exception: ");\
+                OUT_ONCE(unknown_except_caught);\
+                OUT_ONCE("\n");\
+            }
+            
 #undef OUT_ONCE
 
 //#include "bwtest.cpp"

@@ -1,7 +1,6 @@
 /*
  *  bwtest
  *  Copyright  Bowen Cai
- *  MIT lecense
  */
 
  
@@ -10,7 +9,7 @@
 namespace bwtest
 {
 
-    void setOutput(const char * c_str) {
+    void setOutputStream(const char * c_str) {
         if (!strncmp(c_str, "cout", 4)) {
             outputStream = stdCout;
         }
@@ -28,19 +27,32 @@ namespace bwtest
 
      std::ostream& getOutputStream() {
         switch(outputStream) {
-        case stdCout : return std::cout;
-        case stdCerr : return std::cerr;
-        case stdClog : return std::clog;
+        case stdCout :
+                std::cout << std::boolalpha << std::showpos;
+                return std::cout;
+        case stdCerr :
+                std::cerr << std::boolalpha << std::showpos;
+                return std::cerr;
+        case stdClog : 
+                std::clog << std::boolalpha << std::showpos;
+                return std::clog;
         case file :
             static std::ofstream bwOStream(g_fileName, std::ios::app);
-            if (bwOStream.is_open())
+            if (bwOStream.is_open()) {
+                bwOStream << std::boolalpha << std::showpos;
                 return bwOStream;
+            }
             else {
                 throw std::runtime_error("cannot open file");
             }
         } // switch
     }
 
+    bwtest::BWTestInternal::NullOStream NULL_OS;
+
+    std::ostream& getNullOutputStream() {
+        return NULL_OS;
+    }
 
     void cleanOutputStream() {
         if (file == outputStream) {

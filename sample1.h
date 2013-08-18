@@ -4,6 +4,8 @@
  *  MIT lecense
  */
 
+#include "bwtest\bwtest.h"
+
 #include <stdexcept>
 #include <cstdlib>
 

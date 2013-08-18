@@ -1,0 +1,20 @@
+light env  1: 			107812500 micro second 
+light env  2: 			108125000 micro second 
+light env  3: 			108125000 micro second 
+light env  4: 			107812500 micro second 
+stressful env  1: 		168906250 micro second 
+stressful env  2: 		171718750 micro second 
+stressful env  3: 		167812500 micro second 
+stressful env  4: 		170468750 micro second 
+
+
+real time
+
+light env 1: 			10850935 micro second 
+light env 2: 			10853557 micro second 
+light env 3:			10819649 micro second 
+light env 4: 			10848907 micro second 
+stressful env 1: 		17388024 micro second 
+stressful env 2: 		17171906 micro second 
+stressful env 3: 		17089604 micro second 
+stressful env 4: 		17029658 micro second 
