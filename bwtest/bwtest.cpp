@@ -52,7 +52,7 @@ namespace BWTestInternal {
         TestRegister* TestRegister::instance() {
                 
             static bool initialized = false;
-            if(false == TestRegister::initialized) {
+            if(false == initialized) {
                 put_out << "<bwtest version=\"" << BWTEST_VERSION << "\">\n";
                 initialized = true;
             }
@@ -88,23 +88,23 @@ namespace BWTestInternal {
                     const char* testcase = (*i)->getTestCaseName();
                     if (0 == strcmp(name, testcase)) {
                         bwtest::getOutputStream() << "\n<RunTestCase "
-                        << std::setw(10) << " group=\"" << (*i)->getTestGroupName() << '\"' 
-                        << std::setw(10) << " case=\"" << (*i)->getTestCaseName() << '\"'
+                        << " group=\"" << (*i)->getTestGroupName() << '\"' 
+                        << " case=\"" << (*i)->getTestCaseName() << '\"'
                         << ">\n";
 
                         (*i)->excute();
                 
-                        bwtest::getOutputStream() << "\n</RunTestCase>\n";
+                        bwtest::getOutputStream() << "\n</RunTestCase>";
                         
                         return 0;
                     }
                 }
             }
             bwtest::getOutputStream() << "\n<RunTestCase "
-            << std::setw(10) << " group=\"" << g << '\"' 
-            << std::setw(10) << " case=\"" << name << '\"'
+            << " group=\"" << g << '\"' 
+            << " case=\"" << name << '\"'
             << '>'
-            << "\nNo such test case"
+            << "\n\tNo such test case"
             << "\n</RunTestCase>";        
         }
 
@@ -113,7 +113,7 @@ namespace BWTestInternal {
             if (grp != TestRegister::instance()->tests_.end()) {
                 bwtest::getOutputStream() 
                     << "\n<RunTestGroup"
-                    << std::setw(10) << " group=\"" << group << '\"' 
+                    << " group=\"" << group << '\"' 
                     << '>';
 
                 for (size_t j = 0; j != grp->second.size(); ++j) {
@@ -124,7 +124,7 @@ namespace BWTestInternal {
 
                     grp->second.at(j)->excute();
                 
-                    bwtest::getOutputStream() << "    </RunTestCase>";
+                    bwtest::getOutputStream() << "\n    </RunTestCase>";
                 }
 
                bwtest::getOutputStream()
@@ -132,9 +132,9 @@ namespace BWTestInternal {
                 return 0;
             }
             bwtest::getOutputStream() << "\n<RunTestGroup "
-            << std::setw(10) << " group=\"" << group << '\"'
+            << " group=\"" << group << '\"'
             << '>'
-            << "\nNo such test group"
+            << "\n\tNo such test group"
             << "\n</RunTestGroup>\n";
         }
 
@@ -144,17 +144,18 @@ namespace BWTestInternal {
                                         i != obj->tests_.end();
                                         ++i) {
                 bwtest::getOutputStream() 
-                    << "\n<RunTestGroup"
-                    << std::setw(10) << " group=\"" << i->first << '\"' 
+                    << "\n\n<RunTestGroup"
+                    << " group=\"" << i->first << '\"' 
                     << '>';
                 for (size_t j = 0; j != i->second.size(); ++j) {
+                    
                     bwtest::getOutputStream() << "\n    <RunTestCase "
-                    << std::setw(10) << " case=\"" << i->second.at(j)->getTestCaseName() << '\"'
+                    << " case=\"" << i->second.at(j)->getTestCaseName() << '\"'
                     << ">\n";
 
                     i->second.at(j)->excute();
 
-                    bwtest::getOutputStream() << "    </RunTestCase>";
+                    bwtest::getOutputStream() << "\n    </RunTestCase>";
                 }
                 bwtest::getOutputStream()
                     << "\n</RunTestGroup>\n";
@@ -175,43 +176,41 @@ namespace BWTestInternal {
                     }
                 }
             }
-            bwtest::getOutputStream() << "\n<RunTestCase "
-            << std::setw(10) << " group=\"" << group << '\"' 
-            << std::setw(10) << " case=\"" << name << '\"'
+            bwtest::getOutputStream() << "\n<TestCase "
+            << " group=\"" << group << '\"' 
+            << " case=\"" << name << '\"'
             << '>'
-            << "\nNo such test case"
-            << "\n</RunTestCase>";  
+            << "\n\tNo such test case"
+            << "\n</TestCase>";  
             return 0;
         }
         int TestRegister::reportGroup(const char* group) BW_NOEXCEPT {
-                        GroupMap::iterator  grp = TestRegister::instance()->tests_.find(group);
+            
+            GroupMap::iterator  grp = TestRegister::instance()->tests_.find(group);
+            bwtest::getOutputStream() 
+                << "\n<TestGroup"
+                << " group=\"" << group << '\"' 
+                << '>';
             if (grp != TestRegister::instance()->tests_.end()) {
-                bwtest::getOutputStream() 
-                    << "\n<RunTestGroup"
-                    << std::setw(10) << " group=\"" << group << '\"' 
-                    << '>';
                 for (size_t j = 0; j != grp->second.size(); ++j) {
                     grp->second.at(j)->printReport();
                 }
-               bwtest::getOutputStream()
-                    << "\n</RunTestGroup>\n";
-                return 0;
+            } else {
+               bwtest::getOutputStream() << "\n\tNo such test group";
             }
-            bwtest::getOutputStream() << "\n<RunTestGroup "
-            << std::setw(10) << " group=\"" << group << '\"'
-            << '>'
-            << "\nNo such test group"
-            << "\n</RunTestGroup>\n";
+            bwtest::getOutputStream() << "\n</TestGroup>\n";
             return 0;
         }
+            
         int TestRegister::reportAllTests() BW_NOEXCEPT {
-                    TestRegister* obj = TestRegister::instance();
+            
+            TestRegister* obj = TestRegister::instance();
             for (TYPENAME GroupMap::iterator i = obj->tests_.begin();
                                         i != obj->tests_.end();
                                         ++i) {
                 bwtest::getOutputStream() 
                     << "\n<TestGroup"
-                    << std::setw(10) << " group=\"" << i->first << '\"' 
+                    << " group=\"" << i->first << '\"' 
                     << '>';
                 for (size_t j = 0; j != i->second.size(); ++j) {
                     i->second.at(j)->printReport();

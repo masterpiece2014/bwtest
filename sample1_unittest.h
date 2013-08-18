@@ -30,23 +30,28 @@ TEST(sample1,       odd_even,               1) {
 
 // custom test class.
 //  step 1 : inherite
-class MyCustomTestClass : public bwtest::TestBase
+class MyTestClass : public bwtest::TestBase
 {
     int mydata;
     // step 2 : define constructor
-    CONSTRUCT(MyCustomTestClass) {
+    CONSTRUCT(MyTestClass) {
         // you initialzation code here
         this->mydata = 0;
+        // set excution times
+        setExcuTime(3);
     }
 
     // step 3 : overwrite run()
     void run() {
         put_out << "\n\t====test invoked====\n";
         long num = rand() / 10;
+        benchmark.start();
         expect_eq(myCorrectFactorialFunction(num), factorial(num)) << " wrong factorial"
                                                     << "correct: " << myCorrectFactorialFunction(num)
                                                     << "incrrect:" << factorial(num);
-
+        benchmark.stop();
+        throw "some exception";
+        
         expect_true(isPrime(97)) <<  97 << "is not prime";
         
         expect_true(isPrime(2));
@@ -68,7 +73,7 @@ class MyCustomTestClass : public bwtest::TestBase
     }
 };
 // step 4: register
-REGISTER(MyCustomTestClass);
+REGISTER(MyTestClass);
 
 //      test exception
 TEST(sample1, exceptions, 2) {

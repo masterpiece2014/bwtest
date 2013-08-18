@@ -13,7 +13,7 @@ TEST(sample2, constructor, 1) {
 #include <algorithm>
 #include <vector>
 void consumes() {
-    std::vector<short> vec(1<<24);
+    std::vector<short> vec(1<<21);
     std::sort(vec.begin(), vec.end());
     std::is_sorted(vec.begin(), vec.end());
 }

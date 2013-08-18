@@ -60,40 +60,39 @@ public:
             this->__num_excutions_ = t;
         }
 		void excute() {
-			try {
-				for(size_t i = 0; i != __num_excutions_; ++i) {
-					try {
-						run();
-					} catch(std::exception& e) {
-						__num_except_++;
-                        OUT_ONCE("\n>>>");
-						OUT_ONCE(__name_testcase_);
-						OUT_ONCE("       caught std exception:\n>>> ");
-						OUT_ONCE(e.what());
-					} catch(...) {
-						__num_except_++;
-                        OUT_ONCE("\n>>>");
-						OUT_ONCE(__name_testcase_);
-						OUT_ONCE("       caught other exception");
-					}
+			for(size_t i = 0; i != __num_excutions_; ++i) {
+				try {
+					run();
+				} catch(std::exception& e) {
+					__num_except_++;
+                    OUT_ONCE("\n>>>  ");
+					OUT_ONCE(__name_testcase_);
+					OUT_ONCE("    caught std exception:\n>>> ");
+					OUT_ONCE(e.what());
+				} catch(...) {
+					__num_except_++;
+                    OUT_ONCE("\n>>>  ");
+					OUT_ONCE(__name_testcase_);
+					OUT_ONCE("    caught unknown exception");
 				}
-			}
-			catch(...) {
-			    OUT_ONCE("\n>>> ");
-			    OUT_ONCE(__name_testcase_);
-                OUT_ONCE("  testBody: caught unknown exception. \n");
 			}
 		}
 
         void printReport() const BW_NOEXCEPT {
+            
           bwtest::getOutputStream()
-          << "\n    <Test "
-          << " group=\"" << __name_testgroup << '\"' 
-           << " case=\"" << __name_testcase_ << '\"'
-           << " excution=\"" << __num_excutions_ << '\"'
-          << " exceptions=\"" << __num_except_ << '\"'
-           << " time=\"" << (this->benchmark.getDuration()) << " micsec\""
-          << ">";
+            << "\n    <Test "
+            << " group=\""
+                    << std::setw(10) << __name_testgroup << '\"' 
+            << " case=\"" 
+                    << std::setw(10) << __name_testcase_ << '\"'
+            << " excution=\"" 
+                    << std::setw(2) << __num_excutions_ << '\"'
+            << " exceptions=\""
+                    << std::setw(2)  << __num_except_ << '\"'
+            << " time=\"" 
+                    << std::setw(10) << (this->benchmark.getDuration()) << " micsec\""
+            << ">";
         }
 };
 
