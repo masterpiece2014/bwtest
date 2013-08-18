@@ -46,12 +46,13 @@ namespace BWTestInternal {
                         .append("\t Line: ").append(toString(line));
         }
 
-        bool TestRegister::initialized = false;
 
         TestRegister::TestRegister()  {}
 
         TestRegister* TestRegister::instance() {
-            if(TestRegister::initialized == false) {
+                
+            static bool initialized = false;
+            if(false == TestRegister::initialized) {
                 put_out << "<bwtest version=\"" << BWTEST_VERSION << "\">\n";
                 initialized = true;
             }
