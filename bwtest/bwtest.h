@@ -1,5 +1,4 @@
 /*
- *  bwtest
  *	Copyright  Bowen Cai
  *	MIT lecense
  * you can find the license on the bottom of this file

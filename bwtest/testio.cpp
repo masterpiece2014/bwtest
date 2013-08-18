@@ -1,6 +1,6 @@
 /*
- *  bwtest
  *  Copyright  Bowen Cai
+ *  MIT lecense
  */
 
  
