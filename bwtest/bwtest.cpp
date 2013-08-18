@@ -10,50 +10,65 @@
 #include <stdarg.h>
 
 namespace bwtest {
-namespace BWTestInternal
-{
+
+namespace BWTestInternal {
         inline void formatAux(char* ptr, int size, const char* format, ...) {
             va_list args;
             va_start(args, format);
             vsnprintf(ptr, size, format, args);
             va_end(args);
         }
+}
         
         std::string toString(long long val) {
             char buf[4*sizeof(long long)];
-            formatAux(buf, 4*sizeof(long long), "%lld", val);
+            BWTestInternal::formatAux(buf, 4*sizeof(long long), "%lld", val);
             return std::string(buf);
         }
         std::string toString(unsigned long long val) {
             char buf[4*sizeof(unsigned long long)];
-            formatAux(buf, 4*sizeof(unsigned long long), "%llu", val);
+            BWTestInternal::formatAux(buf, 4*sizeof(unsigned long long), "%llu", val);
             return std::string(buf);
         }
         std::string toString(float val) {
 //            float: max exponent10 38
             char buf[48];
-            formatAux(buf, 48, "%f", val);
+            BWTestInternal::formatAux(buf, 48, "%f", val);
             return std::string(buf);
         }
+
+
+
+namespace BWTestInternal {
 
         std::string makeErrorMsg(const char* file, const char* function, long long line) {
             return std::string("\n>>>  ").append(file)
                         .append("\n>>>  Function: ").append(function)
-                        .append("\t Line: ").append(BWTestInternal::toString(line));
+                        .append("\t Line: ").append(toString(line));
         }
 
-        
-        
-        TestRegister* TestRegister::class_handler = BW_NULL_PTR;
+        bool TestRegister::initialized = false;
 
-        TestRegister* TestRegister::instance(){
-            if(TestRegister::class_handler == BW_NULL_PTR) {
-                class_handler = new TestRegister();
+        TestRegister::TestRegister()  {}
+
+        TestRegister* TestRegister::instance() {
+            if(TestRegister::initialized == false) {
+                put_out << "<bwtest version=\"" << BWTEST_VERSION << "\">\n";
+                initialized = true;
             }
-            return class_handler;
+            static TestRegister reg;
+            return &reg;
         }
-
-
+        TestRegister::~TestRegister() BW_NOEXCEPT {
+            put_out << "\n</bwtest>\n\n";
+            for (GroupMap::iterator i = tests_.begin(); i != tests_.end(); ++i) {
+                for (size_t j = 0; j != i->second.size(); ++j) {
+                    delete i->second.at(j);
+                }
+            }
+            ::bwtest::cleanOutputStream();
+        }
+/////////////////////////////////////////////////////////////////////////////////
         bool TestRegister::registerTestDefaultGroup(::bwtest::TestBase* newTest) {
             TestRegister::instance()->tests_[DEFALUT_GROUP].push_back(newTest);
             return true;
@@ -93,7 +108,7 @@ namespace BWTestInternal
             << "\n</RunTestCase>";        
         }
 
-        int  TestRegister::runGroup(const char* group) {
+        int TestRegister::runGroup(const char* group) {
             GroupMap::iterator  grp = TestRegister::instance()->tests_.find(group);
             if (grp != TestRegister::instance()->tests_.end()) {
                 bwtest::getOutputStream() 
@@ -146,28 +161,47 @@ namespace BWTestInternal
             }
             return 0;
         }
-//        void TestRegister::reportAllTests() BW_NOEXCEPT {
-//                        ::bwtest::getOutputStream() << "\n\n=============================================\n";
-//            ::bwtest::getOutputStream() << ">>>\t TEST REPORT" << std::endl;
-//            time_t t_now = std::time(BW_NULL_PTR);
-//            ::bwtest::getOutputStream() << ">>>  time: " << std::asctime(std::localtime(&t_now));
-//            for(size_t i = 0; i != TestRegister::instance()->class_handler->list_testcases_.size(); ++i) {
-//
-//                ::bwtest::getOutputStream() << "--------------------------------------";
-//                class_handler->list_testcases_[i]->printReport();
-//            }
-//
-//            ::bwtest::getOutputStream() << "\n>>> Time elapsed: "
-//                << class_handler->time_total_ << " seconds" << std::endl;
-//
-//            ::bwtest::getOutputStream() << "=============================================\n";
-//        }
 
-
-        int TestRegister::reportTest(const char*group, const char*name) BW_NOEXCEPT {
+        int TestRegister::reportTest(const char* group, const char* name) BW_NOEXCEPT {
+            TYPENAME GroupMap::iterator  grp = TestRegister::instance()->tests_.find(group);
+            if (grp != TestRegister::instance()->tests_.end()) {
+                for (TYPENAME Group::iterator i = grp->second.begin();
+                                    i != grp->second.end();
+                                    ++i) {
+                    const char* testcase = (*i)->getTestCaseName();
+                    if (0 == strcmp(name, testcase)) {
+                        (*i)->printReport();
+                        return 0;
+                    }
+                }
+            }
+            bwtest::getOutputStream() << "\n<RunTestCase "
+            << std::setw(10) << " group=\"" << group << '\"' 
+            << std::setw(10) << " case=\"" << name << '\"'
+            << '>'
+            << "\nNo such test case"
+            << "\n</RunTestCase>";  
             return 0;
         }
         int TestRegister::reportGroup(const char* group) BW_NOEXCEPT {
+                        GroupMap::iterator  grp = TestRegister::instance()->tests_.find(group);
+            if (grp != TestRegister::instance()->tests_.end()) {
+                bwtest::getOutputStream() 
+                    << "\n<RunTestGroup"
+                    << std::setw(10) << " group=\"" << group << '\"' 
+                    << '>';
+                for (size_t j = 0; j != grp->second.size(); ++j) {
+                    grp->second.at(j)->printReport();
+                }
+               bwtest::getOutputStream()
+                    << "\n</RunTestGroup>\n";
+                return 0;
+            }
+            bwtest::getOutputStream() << "\n<RunTestGroup "
+            << std::setw(10) << " group=\"" << group << '\"'
+            << '>'
+            << "\nNo such test group"
+            << "\n</RunTestGroup>\n";
             return 0;
         }
         int TestRegister::reportAllTests() BW_NOEXCEPT {
@@ -187,21 +221,7 @@ namespace BWTestInternal
             }
             return 0;
         }
-        
-  //          <testsuites tests="3" failures="0" disabled="0" errors="0" time="0.001" name="AllTests">  
-  //<testsuite name="CHashTableTest" tests="3" failures="0" disabled="0" errors="0" time="0.001">  
-  //  <testcase name="hashfunc" status="run" time="0.001" classname="CHashTableTest" />  
-  //  <testcase name="addget" status="run" time="0" classname="CHashTableTest" />  
-  //  <testcase name="delget" status="run" time="0" classname="CHashTableTest" />  
-  //</testsuite>  
-/////////////////////////////////////////////////////////////////////////////////
-        TestRegister::~TestRegister() BW_NOEXCEPT {
-            for (GroupMap::iterator i = tests_.begin(); i != tests_.end(); ++i) {
-                for (size_t j = 0; j != i->second.size(); ++j) {
-                    delete i->second.at(j);
-                }
-            }
-            ::bwtest::cleanOutputStream();
-        }
+
 }// namespace BWTestInternal
-}
+
+} // bwtest

@@ -7,6 +7,7 @@
 #ifndef COMMENFILES_H
 #define COMMENFILES_H
 
+#define BWTEST_VERSION 2.0
 
 #ifdef __GNUC__
 

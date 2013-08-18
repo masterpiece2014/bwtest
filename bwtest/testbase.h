@@ -93,7 +93,7 @@ public:
            << " case=\"" << __name_testcase_ << '\"'
            << " excution=\"" << __num_excutions_ << '\"'
           << " exceptions=\"" << __num_except_ << '\"'
-           << " time=\"" << (this->benchmark.getDuration()) << '\"'
+           << " time=\"" << (this->benchmark.getDuration()) << " micsec\""
           << ">";
         }
 };

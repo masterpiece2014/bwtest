@@ -27,7 +27,6 @@
 #include "benchmark.h"
 
 
-
 ///////////////////////////////////////////////////////////////////////////////
 namespace bwtest {
     class TestBase;
@@ -66,7 +65,6 @@ const bool BWTEST_##test_group##__##test_name##_registered =\
 bwtest::BWTestInternal::TestRegister::instance()->registerTest(new _BWTEST_TEST_NAME(test_group, test_name) (), #test_group);\
 void _BWTEST_TEST_NAME(test_group, test_name)::run()
 
-
 #undef CONSTRUCT
 #define CONSTRUCT(CustomClass)\
     public:\
@@ -79,8 +77,6 @@ const bool BWTEST_CUSTOM_##CustomClass##_registered =\
 ///////////////////////////////////////////////////////////////////////////////
 
 namespace bwtest {
-
-namespace BWTestInternal {
 
     std::string toString(long long);
     std::string toString(unsigned long long);
@@ -98,8 +94,11 @@ namespace BWTestInternal {
             return 0;
         }
     }
+
+namespace BWTestInternal {
     std::string makeErrorMsg(const char*, const char*, long long);
 }
+
 }
 
 #undef RANGE_CHEACK
@@ -108,73 +107,38 @@ namespace BWTestInternal {
     int result = rangeCheck<TypeName>(val);\
     if (1 == result) {\
         throw std::overflow_error(\
-                bwtest::BWTestInternal::makeErrorMsg(__FILE__,\
+                bwtest::makeErrorMsg(__FILE__,\
                                     __FUNCTION__, (long long)__LINE__)\
                 .append("\n>>>  overflow in converting to "#TypeName).append("\n")\
           );\
     } else if (-1 == result) {\
         throw std::underflow_error(\
-                bwtest::BWTestInternal::makeErrorMsg(__FILE__,\
+                bwtest::makeErrorMsg(__FILE__,\
                                     __FUNCTION__, (long long)__LINE__)\
                 .append("\n>>>  underflow in converting to "#TypeName).append("\n")\
           );\
     }\
 }
 
-#undef assert_throw
-#define assert_throw(statement, expected_except)\
-        {\
-            bool caught = false;\
-            try{statement;}\
-            catch(expected_except const& e){caught = true;}\
-            catch(...){}\
-            assert(caught);\
-        }
-
-
-#undef assert_throw_any
-#define assert_throw_any(statement)\
-        {\
-            bool caught = false;\
-            try{statement;}\
-            catch(...){caught = true;}\
-            assert(caught);\
-        }
-
-#undef assert_eq
-#define assert_eq(x, y)\
-        assert(fabs(x - y) <= 0.00001);
-
-#undef assert_nq
-#define assert_nq(x, y)\
-    assert(fabs(x - y) > 0.00001);
-
-#undef assert_eq_at
-#define assert_eq_at(x, y, z)\
-    assert(fabs(x - y) < z);
-
-
 namespace bwtest {
-
-namespace BWTestInternal
-{
+namespace BWTestInternal {
 
 class TestRegister
 {
     private:
-        TestRegister(){}
+        TestRegister();
 
         BWTEST_NO_ASSIGN(TestRegister);
         BWTEST_NO_COPY(TestRegister);
 
     private:
         typedef std::vector<bwtest::TestBase*>          Group;
-        typedef std::map<std::string, Group>    GroupMap;
+        typedef std::map<std::string, Group>            GroupMap;
         GroupMap tests_;
         
         unsigned long int time_total_;// duration, in micro second.
 
-        static TestRegister* class_handler;
+        static bool initialized;
 
     public:
         /// class_handler itself does not  need to be deleted
@@ -211,6 +175,14 @@ class TestRegister
 #define RUN_TEST(group, name)\
         bwtest::BWTestInternal::TestRegister::instance()->runTest(#group, #name)
 /////////////////////////////////////////////////////////
+#undef REPORT_TEST
+#define REPORT_TEST(group, name)\
+        bwtest::BWTestInternal::TestRegister::instance()->reportTest(#group, #name)
+
+#undef REPORT_GROUP
+#define REPORT_GROUP(group)\
+    bwtest::BWTestInternal::TestRegister::instance()->reportGroup(#group)
+
 #undef REPORT_ALL
 #define REPORT_ALL\
         bwtest::BWTestInternal::TestRegister::instance()->reportAllTests
@@ -327,8 +299,37 @@ std::ostream& operator<< (const bwtest::BWTestInternal::PrintAux& expAux, const 
                                     __FILE__,\
                                     __LINE__,\
                                     __FUNCTION__)
+//////////////////////////////////////////////////////////////////////////////
+#undef assert_eq
+#define assert_eq(x, y)\
+        assert(fabs(x - y) <= 0.00001);
 
+#undef assert_nq
+#define assert_nq(x, y)\
+    assert(fabs(x - y) > 0.00001);
 
+#undef assert_eq_at
+#define assert_eq_at(x, y, z)\
+    assert(fabs(x - y) < z);
+
+#undef assert_throw
+#define assert_throw(statement, expected_except)\
+        {\
+            bool caught = false;\
+            try{statement;}\
+            catch(expected_except const& e){caught = true;}\
+            catch(...){}\
+            assert(caught);\
+        }
+
+#undef assert_throw_any
+#define assert_throw_any(statement)\
+        {\
+            bool caught = false;\
+            try{statement;}\
+            catch(...){caught = true;}\
+            assert(caught);\
+        }
 
 //@deprecated
 #undef LOOP_FUNC
@@ -361,10 +362,8 @@ std::ostream& operator<< (const bwtest::BWTestInternal::PrintAux& expAux, const 
                 OUT_ONCE(unknown_except_caught);\
                 OUT_ONCE("\n");\
             }
-            
-#undef OUT_ONCE
 
-//#include "bwtest.cpp"
+#undef OUT_ONCE
 
 #endif //_BOWEN_TEST_H_
 

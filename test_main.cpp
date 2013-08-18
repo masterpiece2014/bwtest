@@ -21,7 +21,9 @@ int main() {
     //RUN_GROUP(sample2);
     
     RUN_GROUP(win_time);
+    REPORT_GROUP(win_time);
+    REPORT_TEST(win_time, t1);
    // RUN_TEST(win_time, t1);
-    REPORT_ALL();
+  //  REPORT_ALL();
     return 0;
 }
