@@ -1,4 +1,4 @@
 bwtest
 ======
 
-c++ test&amp;benchmark framework
+cross platform c++ test&amp;benchmark framework
