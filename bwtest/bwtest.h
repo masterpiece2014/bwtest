@@ -137,7 +137,6 @@ class TestRegister
         
         unsigned long int time_total_;// duration, in micro second.
 
-        static bool initialized;
 
     public:
         /// class_handler itself does not  need to be deleted
