@@ -6,6 +6,7 @@
 #ifndef COMMENFILES_H
 #define COMMENFILES_H
 
+
 #define BWTEST_VERSION 2.0
 
 #ifdef __GNUC__
@@ -47,10 +48,13 @@
 
 #if (defined(__unix__) || defined(__unix) || defined(unix) || defined(__linux__))
     #define BWTEST_SYS_POSIX 1
+    #define DELIM '/'
 #elif defined(_WIN32)
     #define BWTEST_SYS_WIN 1
+    #define DELIM '\\'
 #elif (defined(__APPLE__) && defined(__MACH__))
     #define BWTEST_SYS_MAC 1
+    #define DELIM '/'
 #else
     #error "unknown OS."
 #endif

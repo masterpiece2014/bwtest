@@ -7,13 +7,16 @@
 #define BWTESTIO_H
 
 
-#include "commen.h"
-#include "nullostream.h"
 
+#include <stdexcept>
 #include <iostream>
 #include <fstream>
 #include <iomanip>
+#include <cstring>
 
+#include "config.h"
+#include "nullostream.h"
+ 
 namespace bwtest
 {
 
@@ -27,85 +30,72 @@ namespace bwtest
     static BWTestOutputType outputStream = stdCerr;
     static char* g_fileName  = BW_NULL_PTR;
 
-    void setOutputStream(const char*);
-    std::ostream& getOutputStream();
-    std::ostream& getNullOutputStream();
+    void setOutputStream(const char* c_str) {
+        if (!strncmp(c_str, "cout", 4)) {
+            outputStream = stdCout;
+        }
+        else if (!strncmp(c_str, "cerr", 4)) {
+            outputStream = stdCerr;
+        }
+        else if (!strncmp(c_str, "clog", 4)) {
+            outputStream = stdClog;
+        }
+        else {
+            g_fileName = const_cast<char*>(c_str);
+            outputStream = file;
+        }
+    }
 
-    void cleanOutputStream();
+    std::ostream& getOutputStream() {
+        switch(outputStream) {
+        case stdCout :
+                std::cout << std::boolalpha << std::showpos;
+                return std::cout;
+        case stdCerr :
+                std::cerr << std::boolalpha << std::showpos;
+                return std::cerr;
+        case stdClog : 
+                std::clog << std::boolalpha << std::showpos;
+                return std::clog;
+        case file :
+            static std::ofstream bwOStream(g_fileName, std::ios::app);
+            if (bwOStream.is_open()) {
+                bwOStream << std::boolalpha << std::showpos;
+                return bwOStream;
+            }
+            else {
+                throw std::runtime_error("cannot open file");
+            }
+        } // switch
+    }
+
+    std::ostream& getNullOutputStream()  {
+        static bwtest::BWTestInternal::NullOStream NULL_OS;
+        return NULL_OS;
+    }
+
+    void cleanOutputStream() {
+        if (file == outputStream) {
+            static_cast<std::ofstream&>(getOutputStream()
+            ).close();
+        }
+    }
 
     //// multi-type, multi-arguments printing
     ////    e.g.
     //// print(std::string("sdfds"), 32234, 546.546, "sdgdf", 'c');
     ////
-    #ifdef BWTEST_HAS_CXX11_
-    void print();
-    
-    template<typename T, typename... Ts>
-    void print(const T& obj, const Ts&... others);
-    #endif
-    
-    
-} // namespace bwtest
-
-
-
-#define put_out bwtest::getOutputStream()
-#define __MARK put_out << "\n" << __FUNCTION__ << "\t" << __LINE__ << '\n';
-
-
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////  enable printing //////////////////////////////
-//////////////////      in function loops and testCase.excute() ///////////////
-                                #define DO_PRINT
-///////////////////////////////////////////////////////////////////////////////
-
-#define OUT_ONCE(obj)
-
-#ifdef DO_PRINT
-#undef OUT_ONCE
-#define OUT_ONCE(obj) bwtest::getOutputStream() << obj
-
-#endif
-
-namespace bwtest {
-
-namespace  BWTestInternal 
-{
-
-class PrintAux
-{
-    bool expect_failed_;
-
 #ifdef BWTEST_HAS_CXX11_
-    PrintAux() = delete;
-#else
-        PrintAux();
+    void print(){}
+    template<typename T, typename... Ts>
+    void print(const T& obj, const Ts&... others) {
+        std::cout << obj << " ";
+        print(others...);
+    }
 #endif
-        
-    BWTEST_NO_COPY(PrintAux);
-    BWTEST_NO_ASSIGN(PrintAux);
 
-public: // only one ctor is enabled
-    explicit PrintAux(
-                bool statement,
-                bool expectation,
-                const char* expectText0,
-                const char* expectText1,
-                const char* actualText,
-                const char* filePath,
-                int lineNumber,
-                const char* func_name);
 
-    bool has_failed() const BW_NOEXCEPT;
-
-    static bool BWTEST_bool_caughtExcepttion;
-
-};
-
-}
-}// bwtest
-
-#include "testio.cpp"
+} // namespace bwtest
 
 
 #endif // BWTESTIO_H

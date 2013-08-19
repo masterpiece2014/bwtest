@@ -19,8 +19,8 @@
 #include <iostream>
 
 #include "config.h"
- #include "testio.h"
- #include "testbase.h"
+// #include "testio.h"
+// #include "testbase.h"
  
 //#include "bwtest.cpp"
 namespace bwtest {
