@@ -10,6 +10,7 @@
 #include "config.h"
 #include "testio.h"
 #include "benchmark.h"
+#include <typeinfo>
 
 namespace bwtest {
 
@@ -62,11 +63,14 @@ public:
 		void excute() {
 			for(size_t i = 0; i != __num_excutions_; ++i) {
 				try {
+                    // benchmark.start();
 					run();
+                    // benchmark.stop();
 				} catch(std::exception& e) {
 					__num_except_++;
                     bwtest::getOutputStream() << "\n>>>  " << __name_testcase_
-					<< "    caught std exception:\n>>> " << e.what();
+					<< "    caught std exception: " << typeid(e).name()
+                    << "\n>>> " << e.what();
 				} catch(...) {
 					__num_except_++;
                     bwtest::getOutputStream() << "\n>>>  " << __name_testcase_

@@ -119,7 +119,7 @@ std::ostream& operator<< (const bwtest::BWTestInternal::PrintAux& expAux, const 
 #undef put_out
 #define put_out bwtest::getOutputStream()
 #undef __MARK
-#define __MARK put_out << "\n" << __FUNCTION__ << "\t" << __LINE__ << '\n';
+#define __MARK put_out << "\n" << __FUNCTION__ << "\t" << __LINE__ << '\n'
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -216,8 +216,8 @@ const bool BWTEST_CUSTOM_##CustomClass##_registered =\
 
 
 #undef expect_true
-#define expect_true(statement)\
-        bwtest::BWTestInternal::PrintAux(statement,\
+#define expect_true( statement )\
+        bwtest::BWTestInternal::PrintAux((statement),\
                     true,\
                   #statement,\
                   "  is true",\
@@ -228,7 +228,7 @@ const bool BWTEST_CUSTOM_##CustomClass##_registered =\
 
 #undef expect_false
 #define expect_false(statement)\
-        bwtest::BWTestInternal::PrintAux(statement,\
+        bwtest::BWTestInternal::PrintAux((statement),\
                     false,\
                   #statement,\
                   "  is false",\

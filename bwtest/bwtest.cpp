@@ -116,13 +116,14 @@ namespace BWTestInternal {
         TestRegister::TestRegister()  {}
 
         TestRegister* TestRegister::instance() {
-                
+            
+            static TestRegister reg;
             static bool initialized = false;
             if(false == initialized) {
-                put_out << "<bwtest version=\"" << BWTEST_VERSION << "\">\n";
+                bwtest::getOutputStream() << "<bwtest version=\"" << BWTEST_VERSION << "\">\n";
+                bwtest::getOutputStream() << std::boolalpha;// << std::showpos;
                 initialized = true;
             }
-            static TestRegister reg;
             return &reg;
         }
         TestRegister::~TestRegister() BW_NOEXCEPT {

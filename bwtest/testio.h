@@ -24,12 +24,14 @@ namespace bwtest
         stdCout,
         stdCerr,
         stdClog,
+        nullOS,
         file
     };
 
     static BWTestOutputType outputStream = stdCerr;
     static char* g_fileName  = BW_NULL_PTR;
-
+    static bwtest::BWTestInternal::NullOStream NULL_OS;
+    
     void setOutputStream(const char* c_str) {
         if (!strncmp(c_str, "cout", 4)) {
             outputStream = stdCout;
@@ -40,27 +42,27 @@ namespace bwtest
         else if (!strncmp(c_str, "clog", 4)) {
             outputStream = stdClog;
         }
-        else {
+        else if (!strncmp(c_str, "null", 4)){
+            outputStream = nullOS;
+        } else {
             g_fileName = const_cast<char*>(c_str);
             outputStream = file;
         }
     }
-
+    
     std::ostream& getOutputStream() {
         switch(outputStream) {
         case stdCout :
-                std::cout << std::boolalpha << std::showpos;
                 return std::cout;
         case stdCerr :
-                std::cerr << std::boolalpha << std::showpos;
                 return std::cerr;
         case stdClog : 
-                std::clog << std::boolalpha << std::showpos;
                 return std::clog;
+        case nullOS :
+                return NULL_OS;
         case file :
             static std::ofstream bwOStream(g_fileName, std::ios::app);
             if (bwOStream.is_open()) {
-                bwOStream << std::boolalpha << std::showpos;
                 return bwOStream;
             }
             else {
@@ -70,7 +72,6 @@ namespace bwtest
     }
 
     std::ostream& getNullOutputStream()  {
-        static bwtest::BWTestInternal::NullOStream NULL_OS;
         return NULL_OS;
     }
 
