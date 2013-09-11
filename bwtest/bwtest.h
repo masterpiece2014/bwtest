@@ -19,22 +19,25 @@
 #include <iostream>
 
 #include "config.h"
- #include "testio.h"
- #include "testbase.h"
+#include "testio.h"
+#include "testbase.h"
  
 //#include "bwtest.cpp"
 namespace bwtest {
-
+//  base of  all test classes
     class TestBase;
 
+    // commander parse
     extern void init(int argc, char** argv);
     
+    // 
     extern void setOutputStream(const char*);
     extern std::ostream& getOutputStream();
     extern std::ostream& getNullOutputStream();
 
     namespace BWTestInternal {
     
+// All test classese get registered here.
         class TestRegister {
             private:
                 TestRegister();
@@ -46,67 +49,62 @@ namespace bwtest {
                 typedef std::vector<bwtest::TestBase*>          Group;
                 typedef std::map<std::string, Group>            GroupMap;
                 GroupMap tests_;
+                
+                struct FailureInfo;
+                typedef std::vector<TestRegister::FailureInfo>  FailureGroup;
+                FailureGroup    failures_;
+
             public:
             /// class_handler itself does not  need to be deleted
                 ~TestRegister() BW_NOEXCEPT;
+                
                 bool registerTestDefaultGroup(::bwtest::TestBase* newTest);
                 bool registerTest(::bwtest::TestBase* newTest, const char* group);
+                bool registerFailure(const char*, const char*, int);
         
                 int runTest(const char*group, const char*name);
                 int runGroup(const char* group);
                 int runAllTests();
 
-                int reportTest(const char*group, const char*name) BW_NOEXCEPT;
-                int reportGroup(const char* group) BW_NOEXCEPT;
-                int reportAllTests() BW_NOEXCEPT;
+                int reportTest(const char*group, const char*name) const;
+                int reportGroup(const char* group) const;
+                int reportAllTests() const;
+                
+                int reportFailures() const;
         
                 static TestRegister* instance();
         };
+        
+        // print necessary info at expectation failure
         class PrintAux {
-            bool expect_failed_;
-
             #ifdef BWTEST_HAS_CXX11_
                 PrintAux() = delete;
             #else
                 PrintAux();
             #endif
-
                 BWTEST_NO_COPY(PrintAux);
                 BWTEST_NO_ASSIGN(PrintAux);
 
             public: // only one ctor is enabled
                 explicit PrintAux(bool,bool,const char*,const char*,
                             const char*,const char*,int,const char*);
+                
+                bool expect_failed_;
 
                 bool isFailed() const BW_NOEXCEPT;
                 
                 static bool BWTEST_bool_caughtExcepttion;
         };
 
+// make std::string out of error file name, function name and line number
         extern std::string makeErrorMsg(const char*, const char*, long long);
 
     } // internal
-
-    extern std::string toString(long long);
-    extern std::string toString(unsigned long long);
-    extern std::string toString(float);
-
-    template <typename Tgt, typename Src>
-    int rangeCheck(Src src) {
-        Tgt t_max = std::numeric_limits<Tgt>::max();
-        Tgt t_min = std::numeric_limits<Tgt>::min();
-        if (src < t_min) {
-            return -1;
-        } else if (src > t_max) {
-            return 1;
-        } else {
-            return 0;
-        }
-    }
 }
 
 template<typename PrintType>
-std::ostream& operator<< (const bwtest::BWTestInternal::PrintAux& expAux, const PrintType& msg) {
+std::ostream& operator<< (const bwtest::BWTestInternal::PrintAux& expAux,
+                          const PrintType& msg) {
     if(expAux.isFailed()) {
         bwtest::getOutputStream() << ">>>  Message: " << msg;
         bwtest::getOutputStream() << std::endl;
@@ -116,6 +114,30 @@ std::ostream& operator<< (const bwtest::BWTestInternal::PrintAux& expAux, const 
         return bwtest::getNullOutputStream();
     }
 }
+
+namespace bwtest {
+
+// utilities
+extern std::string toString(long long);
+extern std::string toString(unsigned long long);
+extern std::string toString(float);
+
+// for macro RANGE_CHECHK(value, target type)
+template <typename Tgt, typename Src>
+int rangeCheck(Src src) {
+    Tgt t_max = std::numeric_limits<Tgt>::max();
+    Tgt t_min = std::numeric_limits<Tgt>::min();
+    if (src < t_min) {
+        return -1;
+    } else if (src > t_max) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+} // namespace bwtest
+
 #undef put_out
 #define put_out bwtest::getOutputStream()
 #undef __MARK
@@ -137,8 +159,10 @@ class _BWTEST_TEST_NAME_DFGRP(test_name) : public bwtest::TestBase\
         :   TestBase(test_time, #test_name)  {}\
 };\
 const bool BWTEST_##test_name##_registered =\
-        BWTestInternal::TestRegister::instance()->registerTestDefaultGroup(new _BWTEST_TEST_NAME_DFGRP(test_name) ());\
+        BWTestInternal::TestRegister::instance()->registerTestDefaultGroup(\
+                            new _BWTEST_TEST_NAME_DFGRP(test_name) ());\
 void _BWTEST_TEST_NAME_DFGRP(test_name)::run()
+
 /////////////////////////////////////
 #undef _BWTEST_TEST_NAME
 #define _BWTEST_TEST_NAME(test_group, test_name)\
@@ -154,7 +178,8 @@ class _BWTEST_TEST_NAME(test_group, test_name) : public bwtest::TestBase\
         :   TestBase(test_time, #test_name, #test_group)  {}\
 };\
 const bool BWTEST_##test_group##__##test_name##_registered =\
-bwtest::BWTestInternal::TestRegister::instance()->registerTest(new _BWTEST_TEST_NAME(test_group, test_name) (), #test_group);\
+bwtest::BWTestInternal::TestRegister::instance()->registerTest(\
+                new _BWTEST_TEST_NAME(test_group, test_name) (), #test_group);\
 void _BWTEST_TEST_NAME(test_group, test_name)::run()
 
 #undef CONSTRUCT
@@ -165,7 +190,8 @@ void _BWTEST_TEST_NAME(test_group, test_name)::run()
 #undef REGISTER
 #define REGISTER(CustomClass)\
 const bool BWTEST_CUSTOM_##CustomClass##_registered =\
-    bwtest::BWTestInternal::TestRegister::instance()->registerTest(new CustomClass(), ::bwtest::CUSTOM_GROUP)
+    bwtest::BWTestInternal::TestRegister::instance()->registerTest(\
+                                    new CustomClass(), ::bwtest::CUSTOM_GROUP)
 ///////////////////////////////////////////////////////////////////////////////
 
 
@@ -209,22 +235,42 @@ const bool BWTEST_CUSTOM_##CustomClass##_registered =\
 #define REPORT_GROUP(group)\
     bwtest::BWTestInternal::TestRegister::instance()->reportGroup(#group)
 
+#undef REPORT_FAILURES
+#define REPORT_FAILURES\
+        bwtest::BWTestInternal::TestRegister::instance()->reportFailures
+////////////////////////////////////////////////////////////
 #undef REPORT_ALL
 #define REPORT_ALL\
         bwtest::BWTestInternal::TestRegister::instance()->reportAllTests
 ////////////////////////////////////////////////////////////
 
 
+#undef __MEM_FUNC__
+#define __MEM_FUNC__\
+    ((0 == strncmp("run", __FUNCTION__, 3)) ?           \
+            this->getTestCaseName() :                   \
+                            __FUNCTION__)
+
 #undef expect_true
-#define expect_true( statement )\
-        bwtest::BWTestInternal::PrintAux((statement),\
-                    true,\
-                  #statement,\
-                  "  is true",\
-                  "   is false",\
-                  __FILE__,\
-                  __LINE__,\
-                  __FUNCTION__)
+#define expect_true( statement )                                                \
+        bwtest::BWTestInternal::PrintAux((statement),                           \
+                    true,                                                       \
+                  #statement,                                                   \
+                  "  is true",                                                  \
+                  "   is false",                                                \
+                  __FILE__,                                                     \
+                  __LINE__,                                                     \
+                  __MEM_FUNC__)
+
+
+
+
+//((0 == strncmp("run", __FUNCTION__, 3) ? )
+//        this->getTestCaseName() :
+//                            __FUNCTION__)
+
+
+
 
 #undef expect_false
 #define expect_false(statement)\
@@ -235,7 +281,7 @@ const bool BWTEST_CUSTOM_##CustomClass##_registered =\
                   "  is true",\
                   __FILE__,\
                   __LINE__,\
-                  __FUNCTION__)
+                  __MEM_FUNC__)
 
 #undef expect_eq
 #define expect_eq(x, y)\
@@ -246,7 +292,7 @@ const bool BWTEST_CUSTOM_##CustomClass##_registered =\
                     " not equal",\
                   __FILE__,\
                   __LINE__,\
-                  __FUNCTION__)
+                  __MEM_FUNC__)
 
 #undef expect_eq_at
 #define expect_eq_at(x, y, pres)\
@@ -257,7 +303,7 @@ const bool BWTEST_CUSTOM_##CustomClass##_registered =\
                     "not equal at "#pres,\
                   __FILE__,\
                   __LINE__,\
-                  __FUNCTION__)
+                  __MEM_FUNC__)
 
 #undef expect_nq_at
 #define expect_nq_at(x, y, pres)\
@@ -268,7 +314,7 @@ const bool BWTEST_CUSTOM_##CustomClass##_registered =\
                     " equal at "#pres,\
                   __FILE__,\
                   __LINE__,\
-                  __FUNCTION__)
+                  __MEM_FUNC__)
 
 #undef expect_nq
 #define expect_nq(x, y)\
@@ -279,7 +325,7 @@ const bool BWTEST_CUSTOM_##CustomClass##_registered =\
                     " equals ",\
                   __FILE__,\
                   __LINE__,\
-                  __FUNCTION__)
+                  __MEM_FUNC__)
 
 #undef expect_throw
 #define expect_throw(statement, exceptType)\
@@ -294,7 +340,7 @@ const bool BWTEST_CUSTOM_##CustomClass##_registered =\
                                     "  didn't throw "#exceptType,\
                                     __FILE__,\
                                     __LINE__,\
-                                    __FUNCTION__)
+                                    __MEM_FUNC__)
 
 #undef expect_throw_any
 #define expect_throw_any(statement)\
@@ -308,7 +354,7 @@ const bool BWTEST_CUSTOM_##CustomClass##_registered =\
                                     "  throws nothing",\
                                     __FILE__,\
                                     __LINE__,\
-                                    __FUNCTION__)
+                                    __MEM_FUNC__)
 //////////////////////////////////////////////////////////////////////////////
 #undef assert_eq
 #define assert_eq(x, y)\
@@ -392,9 +438,11 @@ const bool BWTEST_CUSTOM_##CustomClass##_registered =\
 
 #endif //_BOWEN_TEST_H_
 
+
+
 //     The MIT License (MIT)
 
-// Copyright (c) <year> <copyright holders>
+// Copyright (c) 2013 Bowen Cai
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal

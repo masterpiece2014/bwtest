@@ -75,7 +75,7 @@ namespace bwtest {
         }
     }
 
-    namespace BWTestInternal {
+namespace BWTestInternal {
 
         inline void formatAux(char* ptr, int size, const char* format, ...) {
             va_list args;
@@ -83,7 +83,7 @@ namespace bwtest {
             vsnprintf(ptr, size, format, args);
             va_end(args);
         }
-    }
+} //     namespace BWTestInternal
         
         std::string toString(long long val) {
             char buf[4*sizeof(long long)];
@@ -101,7 +101,6 @@ namespace bwtest {
             BWTestInternal::formatAux(buf, 48, "%f", val);
             return std::string(buf);
         }
-
 
 
 namespace BWTestInternal {
@@ -128,7 +127,7 @@ namespace BWTestInternal {
         }
         TestRegister::~TestRegister() BW_NOEXCEPT {
             put_out << "\n</bwtest>\n\n";
-            for (GroupMap::iterator i = tests_.begin(); i != tests_.end(); ++i) {
+            for (GroupMap::const_iterator i = tests_.begin(); i != tests_.end(); ++i) {
                 for (size_t j = 0; j != i->second.size(); ++j) {
                     delete i->second.at(j);
                 }
@@ -147,93 +146,93 @@ namespace BWTestInternal {
         }
 
         int TestRegister::runTest(const char* g, const char* name) {
-            TYPENAME GroupMap::iterator  grp = TestRegister::instance()->tests_.find(g);
+            TYPENAME GroupMap::const_iterator  grp = TestRegister::instance()->tests_.find(g);
             if (grp != TestRegister::instance()->tests_.end()) {
-                for (TYPENAME Group::iterator i = grp->second.begin();
+                for (TYPENAME Group::const_iterator i = grp->second.begin();
                                     i != grp->second.end();
                                     ++i) {
                     const char* testcase = (*i)->getTestCaseName();
                     if (0 == strcmp(name, testcase)) {
-                        bwtest::getOutputStream() << "\n<RunTestCase "
+                        bwtest::getOutputStream() << "\n<Run-TestCase "
                         << " group=\"" << (*i)->getTestGroupName() << '\"' 
                         << " case=\"" << (*i)->getTestCaseName() << '\"'
                         << ">\n";
 
                         (*i)->excute();
                 
-                        bwtest::getOutputStream() << "\n</RunTestCase>";
+                        bwtest::getOutputStream() << "\n</Run-TestCase>";
                         
                         return 0;
                     }
                 }
             }
-            bwtest::getOutputStream() << "\n<RunTestCase "
+            bwtest::getOutputStream() << "\n<Run-TestCase "
             << " group=\"" << g << '\"' 
             << " case=\"" << name << '\"'
             << '>'
             << "\n\tNo such test case"
-            << "\n</RunTestCase>";        
+            << "\n</Run-TestCase>";        
         }
 
         int TestRegister::runGroup(const char* group) {
-            GroupMap::iterator  grp = TestRegister::instance()->tests_.find(group);
+            GroupMap::const_iterator  grp = TestRegister::instance()->tests_.find(group);
             if (grp != TestRegister::instance()->tests_.end()) {
                 bwtest::getOutputStream() 
-                    << "\n<RunTestGroup"
+                    << "\n<Run-TestGroup"
                     << " group=\"" << group << '\"' 
                     << '>';
 
                 for (size_t j = 0; j != grp->second.size(); ++j) {
 
-                    bwtest::getOutputStream() << "\n    <RunTestCase "
+                    bwtest::getOutputStream() << "\n    <Run-TestCase "
                     << std::setw(10) << " case=\"" << grp->second.at(j)->getTestCaseName() << '\"'
                     << ">\n";
 
                     grp->second.at(j)->excute();
                 
-                    bwtest::getOutputStream() << "\n    </RunTestCase>";
+                    bwtest::getOutputStream() << "\n    </Run-TestCase>";
                 }
 
                bwtest::getOutputStream()
-                    << "\n</RunTestGroup>\n";
+                    << "\n</Run-TestGroup>\n";
                 return 0;
             }
-            bwtest::getOutputStream() << "\n<RunTestGroup "
+            bwtest::getOutputStream() << "\n<Run-TestGroup "
             << " group=\"" << group << '\"'
             << '>'
             << "\n\tNo such test group"
-            << "\n</RunTestGroup>\n";
+            << "\n</Run-TestGroup>\n";
         }
 
         int TestRegister::runAllTests()  {
             TestRegister* obj = TestRegister::instance();
-            for (TYPENAME GroupMap::iterator i = obj->tests_.begin();
+            for (TYPENAME GroupMap::const_iterator i = obj->tests_.begin();
                                         i != obj->tests_.end();
                                         ++i) {
                 bwtest::getOutputStream() 
-                    << "\n\n<RunTestGroup"
+                    << "\n\n<Run-TestGroup"
                     << " group=\"" << i->first << '\"' 
                     << '>';
                 for (size_t j = 0; j != i->second.size(); ++j) {
                     
-                    bwtest::getOutputStream() << "\n    <RunTestCase "
+                    bwtest::getOutputStream() << "\n    <Run-TestCase "
                     << " case=\"" << i->second.at(j)->getTestCaseName() << '\"'
                     << ">\n";
 
                     i->second.at(j)->excute();
 
-                    bwtest::getOutputStream() << "\n    </RunTestCase>";
+                    bwtest::getOutputStream() << "\n    </Run-TestCase>";
                 }
                 bwtest::getOutputStream()
-                    << "\n</RunTestGroup>\n";
+                    << "\n</Run-TestGroup>\n";
             }
             return 0;
         }
 
-        int TestRegister::reportTest(const char* group, const char* name) BW_NOEXCEPT {
-            TYPENAME GroupMap::iterator  grp = TestRegister::instance()->tests_.find(group);
+        int TestRegister::reportTest(const char* group, const char* name) const{
+            TYPENAME GroupMap::const_iterator  grp = TestRegister::instance()->tests_.find(group);
             if (grp != TestRegister::instance()->tests_.end()) {
-                for (TYPENAME Group::iterator i = grp->second.begin();
+                for (TYPENAME Group::const_iterator i = grp->second.begin();
                                     i != grp->second.end();
                                     ++i) {
                     const char* testcase = (*i)->getTestCaseName();
@@ -252,9 +251,9 @@ namespace BWTestInternal {
             return 0;
         }
 
-        int TestRegister::reportGroup(const char* group) BW_NOEXCEPT {
+        int TestRegister::reportGroup(const char* group) const{
             
-            GroupMap::iterator  grp = TestRegister::instance()->tests_.find(group);
+            GroupMap::const_iterator  grp = TestRegister::instance()->tests_.find(group);
             bwtest::getOutputStream() 
                 << "\n<TestGroup"
                 << " group=\"" << group << '\"' 
@@ -270,10 +269,10 @@ namespace BWTestInternal {
             return 0;
         }
             
-        int TestRegister::reportAllTests() BW_NOEXCEPT {
+        int TestRegister::reportAllTests() const {
             
             TestRegister* obj = TestRegister::instance();
-            for (TYPENAME GroupMap::iterator i = obj->tests_.begin();
+            for (TYPENAME GroupMap::const_iterator i = obj->tests_.begin();
                                         i != obj->tests_.end();
                                         ++i) {
                 bwtest::getOutputStream() 
@@ -289,6 +288,40 @@ namespace BWTestInternal {
             return 0;
         }
 
+        struct TestRegister::FailureInfo {
+            const char* file;
+            const char* function;
+            int lineNumber;
+            
+            FailureInfo(const char* _file,
+                        const char* _function,
+                        int _lineNumber)
+            :   file(_file),
+                function(_function),
+                lineNumber(_lineNumber) {}
+        };
+        
+        bool TestRegister::registerFailure(const char* fl, const char* func, int ln) {
+            this->failures_.push_back(TestRegister::FailureInfo(fl, func, ln));
+        }
+
+        
+        int TestRegister::reportFailures() const {
+            TestRegister* obj = TestRegister::instance();
+            bwtest::getOutputStream() << "=====" << obj->failures_.size() << "================\n\n";
+            for (TYPENAME FailureGroup::const_iterator i = obj->failures_.begin();
+                                        i != obj->failures_.end();
+                                        ++i) {
+                bwtest::getOutputStream() 
+                    << "\n<Expectation-Failure\n"
+                    << "    file=\"" << i->file << '\"'
+                    << "\n    function=\"" << i->function << '\"'
+                    << "\n    line=\"" << i->lineNumber << '\"'
+                    << "    />";
+            }
+            return 0;
+        }
+        
         PrintAux::PrintAux(
                 bool statement,
                 bool expectation,
@@ -297,17 +330,19 @@ namespace BWTestInternal {
                 const char* actualText,
                 const char* filePath,
                 int lineNumber,
-                const char* func_name)
+                const char* funcName)
                 : expect_failed_(statement != expectation) {
 
             if(expect_failed_) {
+                TestRegister::instance()->registerFailure(filePath, funcName, lineNumber);
                 bwtest::getOutputStream()
                 << "\n\n>>>  " << filePath
-                << "\n>>>  Line: " << lineNumber << "\t function name: " << func_name
+                << "\n>>>  Line: " << lineNumber << "\t function name: " << funcName
                 << "\n>>>  Expect: "
                 << expectText0 << expectText1
                 << "\n>>>  Actual: " << actualText
                 << std::endl;
+//                bwtest::BWTestInternal::TestRegister::instance()->
             }
         }
     
